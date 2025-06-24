@@ -12,9 +12,9 @@ set(CMAKE_CXX_FLAGS "-Wall -Werror")
 #find_package(Boost REQUIRED)
 
 # add the executable
-add_executable(blacky main.cpp)
+add_executable(blacky src/main.cpp)
 
-add_library(blackylib blacky.cpp Mazo.cpp Jugador.cpp Carta.cpp tools.cpp)
+add_library(blackylib src/blacky.cpp src/Mazo.cpp src/Jugador.cpp src/Carta.cpp src/tools.cpp)
 
 target_link_libraries(blacky PUBLIC blackylib)
 

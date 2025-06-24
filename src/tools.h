@@ -1,25 +1,23 @@
 #if !defined(TOOLS_H)
 #define TOOLS_H
 
-#include <string>
-#include <istream>
 #include <iostream>
-
-using namespace std;
+#include <istream>
+#include <string>
 
 template <typename Tp>
-Tp input(const string &msj = "", istream &in = cin)
+Tp input(const std::string &msj = "", std::istream &in = std::cin)
 {
     auto execption_mask = in.exceptions();
     try
     {
-        in.exceptions(ios::failbit);
+        in.exceptions(std::ios::failbit);
         Tp x;
-        cout << msj;
+        std::cout << msj;
         in >> x;
         return x;
     }
-    catch (ios::failure &)
+    catch (std::ios::failure &)
     {
         in.exceptions(execption_mask);
         throw;
@@ -27,6 +25,5 @@ Tp input(const string &msj = "", istream &in = cin)
 }
 
 bool seguir_jugando();
-
 
 #endif // TOOLS_H
