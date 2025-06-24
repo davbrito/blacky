@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    volumes:
+      - ./:/usr/project
+    ports:
+      - 8080
+      - 8181
+      - 5000
+      - 3000

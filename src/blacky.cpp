@@ -32,6 +32,7 @@ void instrucciones()
         "8) Luego de que todos los jugadores hayan jugado su turno, ganara aquel que\n"
         "tenga 21 o este mas cerca de dicho numero\n";
     std::cout << instrucciones;
+#pragma GCC diagnostic ignored "-Wunused-result"
     std::system("PAUSE");
 }
 

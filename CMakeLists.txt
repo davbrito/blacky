@@ -4,25 +4,25 @@ cmake_minimum_required(VERSION 3.10)
 project(blacky VERSION 0.1)
 
 # specify the C++ standard
-set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "-Wall -Werror")
 
-#find_package(range-v3 REQUIRED)
-#find_package(Boost REQUIRED)
+set(BUILD_FOLDER "./build")
+set(SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
+set(APPS_DIR "${PROJECT_SOURCE_DIR}/apps")
+set(INCLUDE_DIR "${PROJECT_SOURCE_DIR}/includes")
+
+file(GLOB SOURCE_FILES "${SOURCE_DIR}/*.cpp")
+file(GLOB HEADER_FILES "${SOURCE_DIR}/*.h")
 
 # add the executable
-add_executable(blacky src/main.cpp)
+add_executable(blacky-app src/main.cpp)
+                    
 
-add_library(blackylib src/blacky.cpp src/Mazo.cpp src/Jugador.cpp src/Carta.cpp src/tools.cpp)
+add_library(blacky-lib ${SOURCE_FILES})
 
-target_link_libraries(blacky PUBLIC blackylib)
+find_package(fmt REQUIRED)
+find_package(ImGui-SFML REQUIRED)
 
-#target_link_libraries(Tutorial PRIVATE
-#                           range-v3
-#                           ${Boost_LIBRARIES}
-#)
-
-target_include_directories(blacky PUBLIC  "${PROJECT_BINARY_DIR}"
-                                            "${PROJECT_SOURCE_DIR}"
-)
+target_include_directories(blacky-lib PUBLIC ${INCLUDE_DIR})
+target_link_libraries(blacky-app PUBLIC blacky-lib fmt::fmt ImGui-SFML::ImGui-SFML)

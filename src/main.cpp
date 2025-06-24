@@ -1,3 +1,4 @@
+#include "main.h"
 #include "blacky.h"
 #include "menu.h"
 #include <iostream>
@@ -5,6 +6,11 @@
 
 extern const std::map<Carta, std::string> cartas_map;
 int main()
+{
+    cli_main();
+}
+
+void cli_main()
 {
     //     system("CLS");
     bool end = false;
