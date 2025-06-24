@@ -1,11 +1,9 @@
 #if !defined(CARTA_H)
 #define CARTA_H
 
+#include <array>
 #include <ostream>
 #include <string>
-#include <array>
-
-using namespace std;
 
 enum class Carta
 {
@@ -24,12 +22,12 @@ enum class Carta
     K
 };
 
-constexpr const array<const Carta, 13> allCards = {
+constexpr const std::array<const Carta, 13> allCards = {
     Carta::A, Carta::C2, Carta::C3, Carta::C4, Carta::C5,
     Carta::C6, Carta::C7, Carta::C8, Carta::C9,
     Carta::C10, Carta::J, Carta::Q, Carta::K};
 
-ostream &operator<<(ostream &os, const Carta c);
+std::ostream &operator<<(std::ostream &os, const Carta c);
 // string to_string(const Carta c);
 
 int valor(Carta carta);

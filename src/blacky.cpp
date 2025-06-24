@@ -2,16 +2,14 @@
 #include "menu.h"
 #include "tools.h"
 
+#include <array>
+#include <cassert>
+#include <fstream>
 #include <iostream>
+#include <iterator>
+#include <map>
 #include <string>
 #include <vector>
-#include <cassert>
-#include <map>
-#include <array>
-#include <fstream>
-#include <iterator>
-
-using namespace std;
 
 void instrucciones()
 {
@@ -33,47 +31,49 @@ void instrucciones()
         "7) Se le dara turno al siguiente jugador\n"
         "8) Luego de que todos los jugadores hayan jugado su turno, ganara aquel que\n"
         "tenga 21 o este mas cerca de dicho numero\n";
-    cout << instrucciones;
-    system("PAUSE");
+    std::cout << instrucciones;
+    std::system("PAUSE");
 }
 
-ofstream abrir_archivo(const char *nom_arch)
+std::ofstream abrir_archivo(const char *nom_arch)
 {
-    if (!ifstream(nom_arch))
-        return ofstream(nom_arch);
-    return ofstream(nom_arch, ios::ate);
+    if (!std::ifstream(nom_arch))
+        return std::ofstream(nom_arch);
+    return std::ofstream(nom_arch, std::ios::ate);
 }
 
 int get_random(int low_included, int hi_excluded)
 {
-    mt19937 gen(random_device{}());
-    uniform_int_distribution<int> dis(low_included, hi_excluded - 1);
+    std::mt19937 gen(std::random_device{}());
+    std::uniform_int_distribution<int> dis(low_included, hi_excluded - 1);
     return dis(gen);
 }
 
-int get_random(int hi_excluded) { return get_random(0, hi_excluded); }
+int get_random(int hi_excluded)
+{
+    return get_random(0, hi_excluded);
+}
 
-string pedir_nombre(int num) { return input<string>("Ingrese el nombre del jugador " + to_string(num) + ": "); }
+std::string pedir_nombre(int num)
+{
+    return input<std::string>("Ingrese el nombre del jugador " + std::to_string(num) + ": ");
+}
 
 void turno(Jugador &j, Mazo &m)
 {
-    cout << "\nAhora es el turno de " << j.nombre << ".\n";
+    std::cout << "\nAhora es el turno de " << j.nombre << ".\n";
     j.print_cartas();
 
     if (j.suma() == 21)
     {
-        cout << "Usted tiene un Blackjack. ;)\n";
+        std::cout << "Usted tiene un Blackjack. ;)\n";
         return;
     }
 
-    cout << "La suma de sus cartas es " << j.suma() << ".\n";
+    std::cout << "La suma de sus cartas es " << j.suma() << ".\n";
 
-    auto cs = choice_selector(
-        "Que desea hacer?\n",
-        "Opcion invalida.\n",
-        choice{1, "Pedir, "},
-        choice{2, "Plantarse, "},
-        choice{3, "Decision del computador \n"});
+    auto cs = choice_selector("Que desea hacer?\n", "Opcion invalida.\n", choice{1, "Pedir, "},
+                              choice{2, "Plantarse, "}, choice{3, "Decision del computador \n"});
     while (1)
     {
         int opc = cs();
@@ -83,12 +83,12 @@ void turno(Jugador &j, Mazo &m)
         if (opc == 1)
         {
             auto c = m.pop_card();
-            cout << "Le salio un: " << c << endl;
+            std::cout << "Le salio un: " << c << std::endl;
             j.add_carta(c);
         }
         else if (opc == 2)
         {
-            cout << j.nombre << " se ha plantado.\n";
+            std::cout << j.nombre << " se ha plantado.\n";
             break;
         }
 
@@ -103,18 +103,18 @@ void turno(Jugador &j, Mazo &m)
     }
 }
 
-vector<Jugador> crear_jugadores(size_t n)
+std::vector<Jugador> crear_jugadores(size_t n)
 {
-    vector<Jugador> v;
+    std::vector<Jugador> v;
     for (size_t i = 1; i <= n; i++)
         v.emplace_back(pedir_nombre(i));
     return v;
 }
 
-void estadisticas_finales(const vector<Jugador> &jugadores)
+void estadisticas_finales(const std::vector<Jugador> &jugadores)
 {
-    ofstream file = abrir_archivo("puntuaciones_blackjack.txt");
-    for (ostream &out : vector<reference_wrapper<ostream>>{file, cout})
+    std::ofstream file = abrir_archivo("puntuaciones_blackjack.txt");
+    for (std::ostream &out : std::vector<std::reference_wrapper<std::ostream>>{file, std::cout})
     {
         out << "\nEstos son los resultados del juego.\n";
         for (const auto &jugador : jugadores)
@@ -122,14 +122,14 @@ void estadisticas_finales(const vector<Jugador> &jugadores)
     }
 }
 
-void ganador_ronda(vector<Jugador> &jugadores)
+void ganador_ronda(std::vector<Jugador> &jugadores)
 {
-    auto ganador = find_if(jugadores.begin(), jugadores.end(),
-                           [](Jugador const &j) { return j.suma() <= 21; });
+    auto ganador = find_if(jugadores.begin(), jugadores.end(), [](Jugador const &j)
+                           { return j.suma() <= 21; });
 
     if (ganador == jugadores.end())
     {
-        cout << "\nNo hay ganador en esta ronda.\n";
+        std::cout << "\nNo hay ganador en esta ronda.\n";
         return;
     }
 
@@ -137,13 +137,13 @@ void ganador_ronda(vector<Jugador> &jugadores)
         if (i->suma() <= 21 && i->suma() > ganador->suma())
             ganador = i;
 
-    cout << "\nEl ganador de la ronda es " << ganador->nombre << " con " << ganador->suma() << " puntos\n";
+    std::cout << "\nEl ganador de la ronda es " << ganador->nombre << " con " << ganador->suma() << " puntos\n";
     ganador->ganar();
 }
 
 void jugar()
 {
-    vector<Jugador> jugadores = crear_jugadores(input<int>("Ingrese la cantidad de jugadores: "));
+    std::vector<Jugador> jugadores = crear_jugadores(input<int>("Ingrese la cantidad de jugadores: "));
     do
     {
         Mazo mazo;

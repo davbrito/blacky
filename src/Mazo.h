@@ -1,26 +1,24 @@
 #if !defined(MAZO_H)
 #define MAZO_H
 
-#include <map>
-#include <vector>
-#include <random>
-#include <exception>
 #include <algorithm>
+#include <exception>
+#include <map>
+#include <random>
+#include <vector>
 
 #include "Carta.h"
 #include "Jugador.h"
 
-using namespace std;
-
-struct no_cards : runtime_error
+struct no_cards : std::runtime_error
 {
-    using runtime_error::runtime_error;
+    using std::runtime_error::runtime_error;
 };
 
 class Mazo
 {
-    map<Carta, int> cuenta_{};
-    vector<Carta> cartas_;
+    std::map<Carta, int> cuenta_{};
+    std::vector<Carta> cartas_;
 
 public:
     Mazo();
@@ -49,7 +47,10 @@ private:
     //    }
 };
 
-inline void Mazo::barajar() { shuffle(begin(cartas_), end(cartas_), mt19937{random_device{}()}); }
+inline void Mazo::barajar()
+{
+    std::shuffle(std::begin(cartas_), std::end(cartas_), std::mt19937{std::random_device{}()});
+}
 
 template <typename Range>
 inline void Mazo::repartir(Range &jugadores)

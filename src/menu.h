@@ -5,34 +5,42 @@
 
 #include <functional>
 
-template <typename... T> struct get_first;
+template <typename... T>
+struct get_first;
 
-template <typename T, typename... Tn> struct get_first<T, Tn...>
+template <typename T, typename... Tn>
+struct get_first<T, Tn...>
 {
-    using type = remove_reference_t<T>;
+    using type = std::remove_reference_t<T>;
 };
 
-template <typename... T> struct get_index_type
+template <typename... T>
+struct get_index_type
 {
     using type = typename get_first<T...>::type::index_type;
 };
 
-template <typename... T> using get_first_t = typename get_first<T...>::type;
+template <typename... T>
+using get_first_t = typename get_first<T...>::type;
 
-template <typename... T> using get_index_type_t = typename get_index_type<T...>::type;
+template <typename... T>
+using get_index_type_t = typename get_index_type<T...>::type;
 
-template <typename T, typename Tuple> constexpr bool tuple_contains(const T &x, Tuple &&t)
+template <typename T, typename Tuple>
+constexpr bool tuple_contains(const T &x, Tuple &&t)
 {
-    return apply([&x](auto &&...element) -> bool { return ((element == x) || ...); }, forward<Tuple>(t));
+    return apply([&x](auto &&...element) -> bool
+                 { return ((element == x) || ...); }, std::forward<Tuple>(t));
 }
 
-template <typename Idx> struct choice
+template <typename Idx>
+struct choice
 {
     using index_type = Idx;
     Idx index;
-    string description;
+    std::string description;
 
-    choice(const Idx &i, const string &desc) : index{i}, description{desc}
+    choice(const Idx &i, const std::string &desc) : index{i}, description{desc}
     {
     }
 
@@ -49,51 +57,56 @@ template <typename Idx> struct choice
         return lho.index == rho;
     }
 
-    friend ostream &operator<<(ostream &os, const choice &mo)
+    friend std::ostream &operator<<(std::ostream &os, const choice &mo)
     {
         return os << mo.index << ". " << mo.description;
     }
 };
 
-template <typename... Choice> constexpr auto choice_selector(const string &msj, const string &err, Choice &&...c)
+template <typename... Choice>
+constexpr auto choice_selector(const std::string &msj, const std::string &err, Choice &&...c)
 {
     using index_type = get_index_type_t<Choice...>;
-    return [msj, err, choices = tuple(forward<Choice>(c)...)]() {
-        cout << msj << endl;
-        apply([](const auto &...c) { (cout << ... << c); }, choices);
+    return [msj, err, choices = std::tuple(std::forward<Choice>(c)...)]()
+    {
+        std::cout << msj << std::endl;
+        apply([](const auto &...c)
+              { (std::cout << ... << c); }, choices);
 
         index_type opc;
     ask_opc:
         try
         {
             while (opc = input<index_type>(), !tuple_contains(opc, choices))
-                cout << err << endl;
+                std::cout << err << std::endl;
         }
-        catch (const ios::failure &)
+        catch (const std::ios::failure &)
         {
-            cin.clear();
+            std::cin.clear();
             std::string line;
             std::getline(std::cin, line);
-            cout << err << endl;
+            std::cout << err << std::endl;
             goto ask_opc;
         }
         return opc;
     };
 }
 
-template <typename Idx, typename Operation> struct menu_option
+template <typename Idx, typename Operation>
+struct menu_option
 {
     using index_type = Idx;
     choice<Idx> ch;
     Operation op;
 
-    menu_option(const Idx &idx, const string &desc, Operation &&oper) : ch{idx, desc}, op{forward<Operation>(oper)}
+    menu_option(const Idx &idx, const std::string &desc, Operation &&oper) : ch{idx, desc}, op{std::forward<Operation>(oper)}
     {
     }
 
-    template <typename... Arg> auto operator()(Arg &&...arg) const
+    template <typename... Arg>
+    auto operator()(Arg &&...arg) const
     {
-        return invoke(op, forward<Arg>(arg)...);
+        return std::invoke(op, std::forward<Arg>(arg)...);
     }
 
     friend bool operator==(const menu_option &lho, const menu_option &rho)
@@ -108,13 +121,14 @@ template <typename Idx, typename Operation> struct menu_option
     {
         return lho.ch == rho;
     }
-    friend ostream &operator<<(ostream &os, const menu_option &mo)
+    friend std::ostream &operator<<(std::ostream &os, const menu_option &mo)
     {
         return os << mo.ch;
     }
 };
 
-template <typename T, typename U> bool invoke_if_match(const T &key, const U &callable)
+template <typename T, typename U>
+bool invoke_if_match(const T &key, const U &callable)
 {
     if (key == callable)
     {
@@ -124,23 +138,27 @@ template <typename T, typename U> bool invoke_if_match(const T &key, const U &ca
     return false;
 }
 
-template <size_t I, typename T, typename Tuple> bool invoke_if_match(const T &x, Tuple &&t)
+template <size_t I, typename T, typename Tuple>
+bool invoke_if_match(const T &x, Tuple &&t)
 {
-    if (x == get<I>(t))
+    if (x == std::get<I>(t))
     {
-        get<I>(t)();
+        std::get<I>(t)();
         return true;
     }
     return false;
 }
 
-template <size_t... I, typename... Option> constexpr auto menu(const string &msj, const string &err, Option &&...option)
+template <size_t... I, typename... Option>
+constexpr auto menu(const std::string &msj, const std::string &err, Option &&...option)
 {
     using index_type = get_index_type_t<Option...>;
-    return [msj, err, option...]() {
+    return [msj, err, option...]()
+    {
         auto cs = choice_selector(msj, err, option...);
         index_type choice = cs();
-        std::invoke([&](auto &&...op) { (invoke_if_match(choice, op) || ...); }, option...);
+        std::invoke([&](auto &&...op)
+                    { (invoke_if_match(choice, op) || ...); }, option...);
     };
 }
 

@@ -5,28 +5,24 @@
 
 #include <string>
 #include <string_view>
-#include <vector>
 #include <utility>
-
-using namespace std;
+#include <vector>
 
 class Jugador
 {
-    vector<pair<Carta, int>> cartas_{};
+    std::vector<std::pair<Carta, int>> cartas_{};
     int rondas_ganadas = 0;
 
 public:
-    string nombre;
+    std::string nombre;
 
     Jugador() = delete;
-    Jugador(const string_view nomb)
-        : nombre{nomb} {}
+    Jugador(const std::string_view nomb) : nombre{nomb} {}
 
     inline void add_carta(Carta c);
 
     template <typename... CartaT>
-    inline enable_if_t<conjunction_v<is_same<CartaT, Carta>...>>
-    add_cartas(CartaT&&... c);
+    inline std::enable_if_t<std::conjunction_v<std::is_same<CartaT, Carta>...>> add_cartas(CartaT &&...c);
 
     inline void ganar();
     inline void reset_ganados();
@@ -38,8 +34,8 @@ public:
 inline void Jugador::add_carta(Carta c) { cartas_.push_back({c, valor(c)}); }
 
 template <typename... CartaT>
-inline enable_if_t<conjunction_v<is_same<CartaT, Carta>...>>
-Jugador::add_cartas(CartaT &&... c) { (add_carta(forward<CartaT>(c)), ...); }
+inline std::enable_if_t<std::conjunction_v<std::is_same<CartaT, Carta>...>>
+Jugador::add_cartas(CartaT &&...c) { (add_carta(std::forward<CartaT>(c)), ...); }
 
 inline void Jugador::ganar() { rondas_ganadas++; }
 

@@ -1,22 +1,21 @@
-// *** ADDED BY HEADER FIXUP ***
-#include <istream>
-// *** END ***
+
 #include "Jugador.h"
 #include <iostream>
+#include <istream>
 #include <numeric>
 #include <utility>
 
-using namespace std;
 void Jugador::print_cartas() const
 {
-    cout << "Sus cartas son: ";
+    std::cout << "Sus cartas son: ";
     for (const auto &[carta, _] : cartas_)
-        cout << carta << ", ";
-    cout << "\n";
+        std::cout << carta << ", ";
+    std::cout << "\n";
 }
 
 int Jugador::suma() const
 {
-    return accumulate(begin(cartas_), end(cartas_), 0,
-                      [](int sum, const pair<Carta, int> &c) { return sum + get<int>(c); });
+    return std::accumulate(begin(cartas_), end(cartas_), 0,
+                           [](int sum, const std::pair<Carta, int> &c)
+                           { return sum + std::get<int>(c); });
 }

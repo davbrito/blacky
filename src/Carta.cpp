@@ -1,12 +1,11 @@
 #include "Carta.h"
 #include "menu.h"
 
-#include <map>
 #include <cassert>
+#include <map>
+#include <string>
 
-using namespace std;
-
-const map<Carta, string> cartas_map{
+const std::map<Carta, std::string> cartas_map{
     {Carta::A, "A"},
     {Carta::C2, "2"},
     {Carta::C3, "3"},
@@ -21,8 +20,12 @@ const map<Carta, string> cartas_map{
     {Carta::Q, "Q"},
     {Carta::K, "K"}};
 
-string to_string(const Carta c) { return cartas_map.at(c); }
-ostream &operator<<(ostream &os, const Carta c) { return os << to_string(c); }
+namespace std
+{
+    string to_string(const Carta c) { return cartas_map.at(c); }
+} // namespace std
+
+std::ostream &operator<<(std::ostream &os, const Carta c) { return os << std::to_string(c); }
 
 int pedir_valor_As()
 {
