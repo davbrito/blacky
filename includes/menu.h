@@ -3,7 +3,9 @@
 
 #include "tools.h"
 
+#include <fmt/format.h>
 #include <functional>
+#include <tuple>
 
 template <typename... T>
 struct get_first;
@@ -26,13 +28,6 @@ using get_first_t = typename get_first<T...>::type;
 template <typename... T>
 using get_index_type_t = typename get_index_type<T...>::type;
 
-template <typename T, typename Tuple>
-constexpr bool tuple_contains(const T &x, Tuple &&t)
-{
-    return apply([&x](auto &&...element) -> bool
-                 { return ((element == x) || ...); }, std::forward<Tuple>(t));
-}
-
 template <typename Idx>
 struct choice
 {
@@ -42,6 +37,22 @@ struct choice
 
     choice(const Idx &i, const std::string &desc) : index{i}, description{desc}
     {
+    }
+
+    auto get_label() const
+    {
+        return fmt::format("{}. {}", index, description);
+    }
+
+    template <typename T>
+    bool invoke_if_match(T &&x)
+    {
+        if (x == *this)
+        {
+            (*this)();
+            return true;
+        }
+        return false;
     }
 
     friend bool operator==(const choice &lho, const choice &rho)
@@ -56,74 +67,104 @@ struct choice
     {
         return lho.index == rho;
     }
-
-    friend std::ostream &operator<<(std::ostream &os, const choice &mo)
-    {
-        return os << mo.index << ". " << mo.description;
-    }
 };
 
 template <typename... Choice>
-constexpr auto choice_selector(const std::string &msj, const std::string &err, Choice &&...c)
+struct choice_selector
 {
     using index_type = get_index_type_t<Choice...>;
-    return [msj, err, choices = std::tuple(std::forward<Choice>(c)...)]()
+    std::string msj;
+    std::string err;
+    std::tuple<Choice...> choices;
+
+    choice_selector(const char *msj, const char *err, Choice &&...choices)
+        : msj{msj}, err{err}, choices{std::forward<Choice>(choices)...}
     {
-        std::cout << msj << std::endl;
-        apply([](const auto &...c)
-              { (std::cout << ... << c); }, choices);
+    }
+    choice_selector(const char *msj, const char *err, std::tuple<Choice...> &&choices)
+        : msj{msj}, err{err}, choices{std::move<std::tuple<Choice...>>(choices)}
+    {
+    }
+
+    index_type operator()() const
+    {
+        fmt::println("{}", msj);
+        std::apply(print_choices, choices);
 
         index_type opc;
     ask_opc:
         try
         {
-            while (opc = input<index_type>(), !tuple_contains(opc, choices))
-                std::cout << err << std::endl;
+            while (true)
+            {
+                opc = input<index_type>();
+                bool valid_choice = std::apply(matches_choice, std::tuple_cat(std::make_tuple(opc), choices));
+                if (valid_choice)
+                    break;
+                fmt::println("{}", err);
+            }
         }
         catch (const std::ios::failure &)
         {
             std::cin.clear();
             std::string line;
             std::getline(std::cin, line);
-            std::cout << err << std::endl;
+            fmt::println("{}", err);
             goto ask_opc;
         }
+
         return opc;
-    };
+    }
+
+private:
+    static void print_choices(const Choice &...c)
+    {
+        (fmt::println("{}", c.get_label()), ...);
+    }
+
+    static bool matches_choice(const index_type &choice, const Choice &...c) { return ((choice == c) || ...); }
+};
+
+template <typename... Arg>
+auto choose(const char *msj, const char *err, Arg &&...choices)
+{
+    return choice_selector(msj, err, std::forward<Arg>(choices)...)();
 }
 
 template <typename Idx, typename Operation>
-struct menu_option
+class menu_option
 {
-    using index_type = Idx;
-    choice<Idx> ch;
+    choice<Idx> m_choice;
     Operation op;
 
-    menu_option(const Idx &idx, const std::string &desc, Operation &&oper) : ch{idx, desc}, op{std::forward<Operation>(oper)}
+public:
+    using index_type = Idx;
+
+    menu_option(const Idx &idx, const std::string &desc, Operation &&oper) : m_choice{idx, desc}, op{std::forward<Operation>(oper)}
     {
     }
 
-    template <typename... Arg>
-    auto operator()(Arg &&...arg) const
+    auto get_label() const
     {
-        return std::invoke(op, std::forward<Arg>(arg)...);
+        return m_choice.get_label();
+    }
+
+    auto operator()() const
+    {
+        op();
     }
 
     friend bool operator==(const menu_option &lho, const menu_option &rho)
     {
-        return lho.ch == rho.ch;
+        return lho.m_choice == rho.m_choice;
     }
     friend bool operator==(const index_type &lho, const menu_option &rho)
     {
-        return lho == rho.ch;
+        return lho == rho.m_choice;
     }
     friend bool operator==(const menu_option &lho, const index_type &rho)
     {
-        return lho.ch == rho;
-    }
-    friend std::ostream &operator<<(std::ostream &os, const menu_option &mo)
-    {
-        return os << mo.ch;
+        return lho.m_choice == rho;
     }
 };
 
@@ -138,28 +179,40 @@ bool invoke_if_match(const T &key, const U &callable)
     return false;
 }
 
-template <size_t I, typename T, typename Tuple>
-bool invoke_if_match(const T &x, Tuple &&t)
+template <typename... Options>
+class menu
 {
-    if (x == std::get<I>(t))
-    {
-        std::get<I>(t)();
-        return true;
-    }
-    return false;
-}
+private:
+    using choice_selector_type = choice_selector<Options...>;
+    using index_type = choice_selector_type::index_type;
+    using index_sequence_type = std::index_sequence_for<Options...>;
+    choice_selector_type m_selector;
 
-template <size_t... I, typename... Option>
-constexpr auto menu(const std::string &msj, const std::string &err, Option &&...option)
-{
-    using index_type = get_index_type_t<Option...>;
-    return [msj, err, option...]()
+public:
+    menu(const char *msj, const char *err, Options &&...options)
+        : m_selector{msj, err, std::forward<Options>(options)...}
     {
-        auto cs = choice_selector(msj, err, option...);
-        index_type choice = cs();
-        std::invoke([&](auto &&...op)
-                    { (invoke_if_match(choice, op) || ...); }, option...);
-    };
-}
+    }
+
+    menu(const char *msj, const char *err, std::tuple<Options...> &&options)
+        : m_selector{msj, err, std::move<std::tuple<Options...>>(options)}
+    {
+    }
+
+    auto operator()() const -> void
+    {
+        index_type choice = m_selector();
+
+        match_choice(choice, index_sequence_type{});
+    }
+
+private:
+    template <typename Choice, std::size_t... Is>
+    auto match_choice(Choice &&choice, std::index_sequence<Is...>) const
+    {
+
+        (invoke_if_match(std::forward<Choice>(choice), std::get<Is>(m_selector.choices)), ...);
+    }
+};
 
 #endif // MENU_H

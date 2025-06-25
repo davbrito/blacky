@@ -22,7 +22,8 @@ add_executable(blacky-app src/main.cpp)
 add_library(blacky-lib ${SOURCE_FILES})
 
 find_package(fmt REQUIRED)
-find_package(ImGui-SFML REQUIRED)
+find_package(Boost REQUIRED COMPONENTS iostreams)
 
 target_include_directories(blacky-lib PUBLIC ${INCLUDE_DIR})
-target_link_libraries(blacky-app PUBLIC blacky-lib fmt::fmt ImGui-SFML::ImGui-SFML)
+target_link_libraries(blacky-app PUBLIC blacky-lib fmt::fmt)
+target_link_libraries(blacky-lib PUBLIC fmt::fmt Boost::iostreams)

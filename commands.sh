@@ -23,12 +23,20 @@ build(){
 case "$1" in
 
   install )
-    conan install . --profile:all=./profiles/default -b build_type=Release
+    conan install . --profile:all=./profiles/default -b build_type=Release "${@:2}"
   ;;
 
   build )
     build "${@:2}"
   ;;
+
+    run )
+        ./build/Release/blacky-app
+    ;;
+
+    brun )
+        build "${@:2}" && ./build/Release/blacky-app
+    ;;
 
   * )
     show_help

@@ -2,6 +2,11 @@
 #include "menu.h"
 #include "tools.h"
 
+#include <boost/iostreams/stream.hpp>
+#include <boost/iostreams/tee.hpp>
+
+#include <fmt/ostream.h>
+
 #include <array>
 #include <cassert>
 #include <fstream>
@@ -11,29 +16,28 @@
 #include <string>
 #include <vector>
 
+constexpr const auto INSTRUCCIONES =
+    "Instrucciones.\n\n"
+    "Valor de las cartas:\n"
+    "El As tiene un valor de 1 u 11  (tendra la opcion de elegir)\n"
+    "Las cartas J, Q y K tienen un valor de 10 c/u.   El resto de\n"
+    "las cartas del 2 al 10 tendran su valor natural. El objetivo\n"
+    "del juego es llegar a 21 o lo mas cerca posible,  para ello:\n"
+    "1) Se le repartiran 2 cartas y se le indicara la sumatoria de las mismas.\n"
+    "2) En tal caso de que sus 2 cartas principales sean un As y una carta cuyo\n"
+    "valor sea 10, usted tendra Blackjack y ganara automaticamente\n"
+    "3) Se le preguntara si desea pedir otra carta, plantarse o dejar que el computador elija.\n"
+    "Opcion que debe elegir segun sea su mano\n"
+    "4) Si elige pedir se le dara otra carta la cual se sumara a las que ya tenia\n"
+    "5) Si al pedir una carta se pasa de 21 perdera la ronda\n"
+    "6) Si elige plantarse no se le repartiran mas cartas y se quedara con la sumatoria que posea\n"
+    "7) Se le dara turno al siguiente jugador\n"
+    "8) Luego de que todos los jugadores hayan jugado su turno, ganara aquel que\n"
+    "tenga 21 o este mas cerca de dicho numero\n";
+
 void instrucciones()
 {
-    constexpr auto instrucciones =
-        "Instrucciones.\n\n"
-        "Valor de las cartas:\n"
-        "El As tiene un valor de 1 u 11  (tendra la opcion de elegir)\n"
-        "Las cartas J, Q y K tienen un valor de 10 c/u.   El resto de\n"
-        "las cartas del 2 al 10 tendran su valor natural. El objetivo\n"
-        "del juego es llegar a 21 o lo mas cerca posible,  para ello:\n"
-        "1) Se le repartiran 2 cartas y se le indicara la sumatoria de las mismas.\n"
-        "2) En tal caso de que sus 2 cartas principales sean un As y una carta cuyo\n"
-        "valor sea 10, usted tendra Blackjack y ganara automaticamente\n"
-        "3) Se le preguntara si desea pedir otra carta, plantarse o dejar que el computador elija.\n"
-        "Opcion que debe elegir segun sea su mano\n"
-        "4) Si elige pedir se le dara otra carta la cual se sumara a las que ya tenia\n"
-        "5) Si al pedir una carta se pasa de 21 perdera la ronda\n"
-        "6) Si elige plantarse no se le repartiran mas cartas y se quedara con la sumatoria que posea\n"
-        "7) Se le dara turno al siguiente jugador\n"
-        "8) Luego de que todos los jugadores hayan jugado su turno, ganara aquel que\n"
-        "tenga 21 o este mas cerca de dicho numero\n";
-    std::cout << instrucciones;
-#pragma GCC diagnostic ignored "-Wunused-result"
-    std::system("PAUSE");
+    fmt::println("{}", INSTRUCCIONES);
 }
 
 std::ofstream abrir_archivo(const char *nom_arch)
@@ -62,19 +66,21 @@ std::string pedir_nombre(int num)
 
 void turno(Jugador &j, Mazo &m)
 {
-    std::cout << "\nAhora es el turno de " << j.nombre << ".\n";
+    fmt::println("\nAhora es el turno de {}.", j.nombre);
     j.print_cartas();
 
     if (j.suma() == 21)
     {
-        std::cout << "Usted tiene un Blackjack. ;)\n";
+        fmt::println("Usted tiene un Blackjack. ;)");
         return;
     }
 
-    std::cout << "La suma de sus cartas es " << j.suma() << ".\n";
+    fmt::println("La suma de sus cartas es {}.", j.suma());
 
-    auto cs = choice_selector("Que desea hacer?\n", "Opcion invalida.\n", choice{1, "Pedir, "},
-                              choice{2, "Plantarse, "}, choice{3, "Decision del computador \n"});
+    auto cs = choice_selector("Que desea hacer?", "Opcion invalida.",
+                              choice{1, "Pedir, "},
+                              choice{2, "Plantarse, "},
+                              choice{3, "Decision del computador "});
     while (1)
     {
         int opc = cs();
@@ -84,21 +90,21 @@ void turno(Jugador &j, Mazo &m)
         if (opc == 1)
         {
             auto c = m.pop_card();
-            std::cout << "Le salio un: " << c << std::endl;
+            fmt::println("Le salio un: {}", c);
             j.add_carta(c);
         }
         else if (opc == 2)
         {
-            std::cout << j.nombre << " se ha plantado.\n";
+            fmt::println("{} se ha plantado.", j.nombre);
             break;
         }
 
         j.print_cartas();
-        printf("La suma de sus cartas es %i.\n", j.suma());
+        fmt::println("La suma de sus cartas es {}.", j.suma());
 
         if (j.suma() > 21)
         {
-            printf("Se ha pasado de 21\n");
+            fmt::println("Se ha pasado de 21");
             break;
         }
     }
@@ -115,12 +121,12 @@ std::vector<Jugador> crear_jugadores(size_t n)
 void estadisticas_finales(const std::vector<Jugador> &jugadores)
 {
     std::ofstream file = abrir_archivo("puntuaciones_blackjack.txt");
-    for (std::ostream &out : std::vector<std::reference_wrapper<std::ostream>>{file, std::cout})
-    {
-        out << "\nEstos son los resultados del juego.\n";
-        for (const auto &jugador : jugadores)
-            out << jugador.nombre << ": " << jugador.ganados() << " rondas ganadas.\n";
-    }
+    auto sink = boost::iostreams::tee(std::cout, file);
+    auto output = boost::iostreams::stream<boost::iostreams::tee_device<std::ostream, std::ofstream>>(sink);
+
+    fmt::println(output, "\nEstos son los resultados del juego.");
+    for (const auto &jugador : jugadores)
+        fmt::println(output, "{}: {} rondas ganadas.", jugador.nombre, jugador.ganados());
 }
 
 void ganador_ronda(std::vector<Jugador> &jugadores)
@@ -130,7 +136,7 @@ void ganador_ronda(std::vector<Jugador> &jugadores)
 
     if (ganador == jugadores.end())
     {
-        std::cout << "\nNo hay ganador en esta ronda.\n";
+        fmt::println("\nNo hay ganador en esta ronda.");
         return;
     }
 
@@ -138,7 +144,7 @@ void ganador_ronda(std::vector<Jugador> &jugadores)
         if (i->suma() <= 21 && i->suma() > ganador->suma())
             ganador = i;
 
-    std::cout << "\nEl ganador de la ronda es " << ganador->nombre << " con " << ganador->suma() << " puntos\n";
+    fmt::println("\nEl ganador de la ronda es {} con {} puntos", ganador->nombre, ganador->suma());
     ganador->ganar();
 }
 

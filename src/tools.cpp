@@ -1,11 +1,12 @@
 #include "tools.h"
 
+#include <fmt/format.h>
 #include <iostream>
 #include <iterator>
 
 bool seguir_jugando()
 {
-    std::cout << "Desean jugar otra ronda? (s/n): ";
+    fmt::print("¿Desean jugar otra ronda? (s/n): ");
     for (auto itr = std::istream_iterator<std::string>(std::cin), end = std::istream_iterator<std::string>();
          itr != end; itr++)
     {
@@ -13,7 +14,8 @@ bool seguir_jugando()
             return true;
         if (*itr == "n")
             return false;
-        std::cout << "Opcion invalida.\n";
+
+        fmt::println("Opcion invalida.");
     }
     return false;
 }

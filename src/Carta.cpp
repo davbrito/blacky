@@ -4,8 +4,9 @@
 #include <cassert>
 #include <map>
 #include <string>
+#include <string_view>
 
-const std::map<Carta, std::string> cartas_map{
+const std::map<Carta, const char *> cartas_map{
     {Carta::A, "A"},
     {Carta::C2, "2"},
     {Carta::C3, "3"},
@@ -20,21 +21,15 @@ const std::map<Carta, std::string> cartas_map{
     {Carta::Q, "Q"},
     {Carta::K, "K"}};
 
-namespace std
-{
-    string to_string(const Carta c) { return cartas_map.at(c); }
-} // namespace std
-
-std::ostream &operator<<(std::ostream &os, const Carta c) { return os << std::to_string(c); }
-
 int pedir_valor_As()
 {
-    auto opc = choice_selector("Usted tiene un nuevo as. Escoja el valor deseado",
-                               "Opcion invalida.\n",
-                               choice{1, "1\n"},
-                               choice{2, "11\n"})();
+    auto opc = choose("Usted tiene un nuevo as. Escoja el valor deseado",
+                      "Opcion invalida.", choice{1, "1"}, choice{2, "11"});
     return (opc == 1 ? 1 : 11);
 }
+
+const char *format_as(const Carta c) { return get_carta_name(c); }
+const char *get_carta_name(const Carta c) { return cartas_map.at(c); }
 
 int valor(Carta carta)
 {

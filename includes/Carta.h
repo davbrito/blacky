@@ -19,7 +19,8 @@ enum class Carta
     C10,
     J,
     Q,
-    K
+    K,
+
 };
 
 constexpr const std::array<const Carta, 13> allCards = {
@@ -27,7 +28,9 @@ constexpr const std::array<const Carta, 13> allCards = {
     Carta::C6, Carta::C7, Carta::C8, Carta::C9,
     Carta::C10, Carta::J, Carta::Q, Carta::K};
 
-std::ostream &operator<<(std::ostream &os, const Carta c);
+const char *format_as(const Carta c);
+const char *get_carta_name(const Carta c);
+
 // string to_string(const Carta c);
 
 int valor(Carta carta);
