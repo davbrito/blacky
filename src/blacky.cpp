@@ -7,12 +7,14 @@
 
 #include <fmt/ostream.h>
 
+#include <algorithm>
 #include <array>
 #include <cassert>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -64,12 +66,25 @@ std::string pedir_nombre(int num)
     return input<std::string>("Ingrese el nombre del jugador " + std::to_string(num) + ": ");
 }
 
+namespace choice_type
+{
+    constexpr const int PEDIR = 1;
+    constexpr const int PLANTARSE = 2;
+    constexpr const int DECISION_COMPUTADOR = 3;
+};
+
+constexpr const int BLACKJACK = 21;
+
+constexpr const auto ask_choice = choice_selector("Que desea hacer?", "Opcion invalida.",
+                                                  choice{choice_type::PEDIR, "Pedir, "},
+                                                  choice{choice_type::PLANTARSE, "Plantarse, "},
+                                                  choice{choice_type::DECISION_COMPUTADOR, "Decision del computador "});
 void turno(Jugador &j, Mazo &m)
 {
     fmt::println("\nAhora es el turno de {}.", j.nombre);
     j.print_cartas();
 
-    if (j.suma() == 21)
+    if (j.suma() == BLACKJACK)
     {
         fmt::println("Usted tiene un Blackjack. ;)");
         return;
@@ -77,23 +92,19 @@ void turno(Jugador &j, Mazo &m)
 
     fmt::println("La suma de sus cartas es {}.", j.suma());
 
-    auto cs = choice_selector("Que desea hacer?", "Opcion invalida.",
-                              choice{1, "Pedir, "},
-                              choice{2, "Plantarse, "},
-                              choice{3, "Decision del computador "});
     while (1)
     {
-        int opc = cs();
-        if (opc == 3)
+        int opc = ask_choice();
+        if (opc == choice_type::DECISION_COMPUTADOR)
             opc = get_random(1, 3);
 
-        if (opc == 1)
+        if (opc == choice_type::PEDIR)
         {
             auto c = m.pop_card();
-            fmt::println("Le salio un: {}", c);
+            fmt::println("Le salio un: {}", get_carta_name(c));
             j.add_carta(c);
         }
-        else if (opc == 2)
+        else if (opc == choice_type::PLANTARSE)
         {
             fmt::println("{} se ha plantado.", j.nombre);
             break;
@@ -102,7 +113,7 @@ void turno(Jugador &j, Mazo &m)
         j.print_cartas();
         fmt::println("La suma de sus cartas es {}.", j.suma());
 
-        if (j.suma() > 21)
+        if (j.suma() > BLACKJACK)
         {
             fmt::println("Se ha pasado de 21");
             break;
@@ -110,12 +121,10 @@ void turno(Jugador &j, Mazo &m)
     }
 }
 
-std::vector<Jugador> crear_jugadores(size_t n)
+std::vector<Jugador> crear_jugadores(int n)
 {
-    std::vector<Jugador> v;
-    for (size_t i = 1; i <= n; i++)
-        v.emplace_back(pedir_nombre(i));
-    return v;
+    auto names = std::views::iota(1, n + 1) | std::views::transform(pedir_nombre);
+    return {std::begin(names), std::end(names)};
 }
 
 void estadisticas_finales(const std::vector<Jugador> &jugadores)
@@ -129,20 +138,28 @@ void estadisticas_finales(const std::vector<Jugador> &jugadores)
         fmt::println(output, "{}: {} rondas ganadas.", jugador.nombre, jugador.ganados());
 }
 
+void print_players_status(const std::vector<Jugador> &jugadores)
+{
+    fmt::println("\nEstado de los jugadores:");
+    for (const auto &jugador : jugadores)
+    {
+        fmt::println("\nJugador {}:", jugador.nombre);
+        jugador.print_cartas();
+        fmt::println("{} tiene {} puntos y ha ganado {} rondas.", jugador.nombre, jugador.suma(), jugador.ganados());
+    }
+}
+
 void ganador_ronda(std::vector<Jugador> &jugadores)
 {
-    auto ganador = find_if(jugadores.begin(), jugadores.end(), [](Jugador const &j)
-                           { return j.suma() <= 21; });
+    auto candidatos = jugadores | std::views::filter([](const Jugador &j)
+                                                     { return j.suma() <= BLACKJACK; });
+    auto ganador = std::ranges::max_element(candidatos, {}, &Jugador::suma);
 
-    if (ganador == jugadores.end())
+    if (ganador == candidatos.end())
     {
         fmt::println("\nNo hay ganador en esta ronda.");
         return;
     }
-
-    for (auto i = ganador, end = jugadores.end(); i != end; i++)
-        if (i->suma() <= 21 && i->suma() > ganador->suma())
-            ganador = i;
 
     fmt::println("\nEl ganador de la ronda es {} con {} puntos", ganador->nombre, ganador->suma());
     ganador->ganar();
@@ -150,22 +167,24 @@ void ganador_ronda(std::vector<Jugador> &jugadores)
 
 void jugar()
 {
-    std::vector<Jugador> jugadores = crear_jugadores(input<int>("Ingrese la cantidad de jugadores: "));
-    do
+    auto jugadores = crear_jugadores(input<int>("Ingrese la cantidad de jugadores: "));
+
+    while (true)
     {
         Mazo mazo;
         mazo.repartir(jugadores);
         for (auto &jugador : jugadores)
         {
-            // system("CLS");
             turno(jugador, mazo);
-            if (jugador.suma() == 21)
+            if (jugador.suma() == BLACKJACK)
                 break;
-            // system("PAUSE");
         }
         ganador_ronda(jugadores);
-    } while (seguir_jugando());
-    // system("CLS");
+        print_players_status(jugadores);
+
+        if (!seguir_jugando())
+            break;
+    };
+
     estadisticas_finales(jugadores);
-    // system("PAUSE");
 }

@@ -33,9 +33,9 @@ struct choice
 {
     using index_type = Idx;
     Idx index;
-    std::string description;
+    const char *description;
 
-    choice(const Idx &i, const std::string &desc) : index{i}, description{desc}
+    constexpr choice(const Idx &i, const char *desc) : index{i}, description{desc}
     {
     }
 
@@ -73,15 +73,15 @@ template <typename... Choice>
 struct choice_selector
 {
     using index_type = get_index_type_t<Choice...>;
-    std::string msj;
-    std::string err;
-    std::tuple<Choice...> choices;
+    const char *msj;
+    const char *err;
+    const std::tuple<Choice...> choices;
 
-    choice_selector(const char *msj, const char *err, Choice &&...choices)
+    constexpr choice_selector(const char *msj, const char *err, Choice &&...choices)
         : msj{msj}, err{err}, choices{std::forward<Choice>(choices)...}
     {
     }
-    choice_selector(const char *msj, const char *err, std::tuple<Choice...> &&choices)
+    constexpr choice_selector(const char *msj, const char *err, std::tuple<Choice...> &&choices)
         : msj{msj}, err{err}, choices{std::move<std::tuple<Choice...>>(choices)}
     {
     }
@@ -140,9 +140,7 @@ class menu_option
 public:
     using index_type = Idx;
 
-    menu_option(const Idx &idx, const std::string &desc, Operation &&oper) : m_choice{idx, desc}, op{std::forward<Operation>(oper)}
-    {
-    }
+    constexpr menu_option(const Idx &idx, const char *desc, Operation &&oper) : m_choice{idx, desc}, op{std::forward<Operation>(oper)} {}
 
     auto get_label() const
     {

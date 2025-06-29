@@ -10,10 +10,10 @@ Mazo::Mazo()
 
 Carta Mazo::pop_card()
 {
-    if (cartas_.empty())
+    if (m_cartas.empty())
         throw no_cards("No hay más cartas en el mazo.");
-    auto carta = cartas_.back();
-    cartas_.pop_back();
-    cuenta_.at(carta)--;
+    auto carta = m_cartas.back();
+    m_cartas.pop_back();
+    m_cuenta.at(carta)--;
     return carta;
 }

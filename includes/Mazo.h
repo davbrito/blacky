@@ -2,6 +2,7 @@
 #define MAZO_H
 
 #include <algorithm>
+#include <concepts>
 #include <exception>
 #include <map>
 #include <random>
@@ -17,18 +18,32 @@ struct no_cards : std::runtime_error
 
 class Mazo
 {
-    std::map<Carta, int> cuenta_{};
-    std::vector<Carta> cartas_;
 
 public:
     Mazo();
     Carta pop_card();
-    template <typename Range>
-    inline void repartir(Range &jugadores);
+
+    void repartir(std::ranges::range auto &jugadores)
+    {
+        for (Jugador &jugador : jugadores)
+            jugador.add_cartas({pop_card(), pop_card()});
+    }
 
 private:
-    inline void barajar();
-    inline void push_card(Carta c);
+    std::map<Carta, int> m_cuenta{};
+    std::vector<Carta> m_cartas;
+    std::mt19937 random_generator{std::random_device{}()};
+
+    inline void barajar()
+    {
+        std::ranges::shuffle(m_cartas, random_generator);
+    }
+
+    inline void push_card(Carta c)
+    {
+        m_cuenta[c]++;
+        m_cartas.push_back(c);
+    }
 
     //    void debug_print() const
     //    {
@@ -46,23 +61,5 @@ private:
     //        cout << endl;
     //    }
 };
-
-inline void Mazo::barajar()
-{
-    std::shuffle(std::begin(cartas_), std::end(cartas_), std::mt19937{std::random_device{}()});
-}
-
-template <typename Range>
-inline void Mazo::repartir(Range &jugadores)
-{
-    for (Jugador &jugador : jugadores)
-        jugador.add_cartas(pop_card(), pop_card());
-}
-
-inline void Mazo::push_card(Carta c)
-{
-    cuenta_[c]++;
-    cartas_.push_back(c);
-}
 
 #endif // MAZO_H

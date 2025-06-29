@@ -1,28 +1,30 @@
 
 #include "Jugador.h"
 
-#include <algorithm>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
-#include <iostream>
-#include <istream>
-#include <iterator>
-#include <numeric>
+
+#include <algorithm>
+#include <functional>
+#include <initializer_list>
 #include <ranges>
-#include <utility>
 
-void Jugador::print_cartas() const
+void Jugador::ganar() { rondas_ganadas++; }
+
+void Jugador::reset_ganados() noexcept { rondas_ganadas = 0; }
+
+int Jugador::ganados() const noexcept { return rondas_ganadas; }
+
+void Jugador::print_cartas() const { fmt::print("Sus cartas son: {}", fmt::join(m_cartas | std::views::keys | std::views::transform(&get_carta_name), ", ")); }
+
+int Jugador::suma() const { return std::ranges::fold_left(m_cartas | std::views::values, 0, std::plus{}); }
+
+void Jugador::add_carta(Carta c) { m_cartas.emplace(c, valor(c)); }
+
+void Jugador::add_cartas(std::initializer_list<Carta> c)
 {
-    fmt::print("{}", "Sus cartas son: ");
-    auto cs = cartas_ | std::views::transform([](const std::pair<Carta, int> &carta)
-                                              { return get_carta_name(carta.first); });
-    fmt::print("{}", fmt::join(cs, ", "));
-    fmt::println("\n");
+    for (const Carta carta : c)
+        add_carta(carta);
 }
 
-int Jugador::suma() const
-{
-    return std::accumulate(begin(cartas_), end(cartas_), 0,
-                           [](int sum, const std::pair<Carta, int> &c)
-                           { return sum + std::get<int>(c); });
-}
+void Jugador::reset_cartas() { m_cartas.clear(); }

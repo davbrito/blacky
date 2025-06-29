@@ -3,14 +3,15 @@
 
 #include "Carta.h"
 
+#include <concepts>
+#include <map>
 #include <string>
 #include <string_view>
 #include <utility>
-#include <vector>
 
 class Jugador
 {
-    std::vector<std::pair<Carta, int>> cartas_{};
+    std::multimap<Carta, int> m_cartas{};
     int rondas_ganadas = 0;
 
 public:
@@ -19,28 +20,15 @@ public:
     Jugador() = delete;
     Jugador(const std::string_view nomb) : nombre{nomb} {}
 
-    inline void add_carta(Carta c);
-
-    template <typename... CartaT>
-    inline std::enable_if_t<std::conjunction_v<std::is_same<CartaT, Carta>...>> add_cartas(CartaT &&...c);
-
-    inline void ganar();
-    inline void reset_ganados();
-    inline int ganados() const;
+    void ganar();
+    void reset_ganados() noexcept;
+    int ganados() const noexcept;
     int suma() const;
     void print_cartas() const;
+
+    void add_carta(Carta c);
+    void add_cartas(std::initializer_list<Carta> c);
+    void reset_cartas();
 };
-
-inline void Jugador::add_carta(Carta c) { cartas_.push_back({c, valor(c)}); }
-
-template <typename... CartaT>
-inline std::enable_if_t<std::conjunction_v<std::is_same<CartaT, Carta>...>>
-Jugador::add_cartas(CartaT &&...c) { (add_carta(std::forward<CartaT>(c)), ...); }
-
-inline void Jugador::ganar() { rondas_ganadas++; }
-
-inline void Jugador::reset_ganados() { rondas_ganadas = 0; }
-
-inline int Jugador::ganados() const { return rondas_ganadas; }
 
 #endif // JUGADOR_H

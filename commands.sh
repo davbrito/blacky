@@ -30,13 +30,17 @@ case "$1" in
     build "${@:2}"
   ;;
 
-    run )
-        ./build/Release/blacky-app
-    ;;
+  run )
+      ./build/Release/blacky-app
+  ;;
 
-    brun )
-        build "${@:2}" && ./build/Release/blacky-app
-    ;;
+  brun )
+      build "${@:2}" && ./build/Release/blacky-app
+  ;;
+  
+  cli )
+      build "${@:2}" && ./build/Release/blacky-cli
+  ;;
 
   * )
     show_help

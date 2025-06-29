@@ -28,7 +28,6 @@ int pedir_valor_As()
     return (opc == 1 ? 1 : 11);
 }
 
-const char *format_as(const Carta c) { return get_carta_name(c); }
 const char *get_carta_name(const Carta c) { return cartas_map.at(c); }
 
 int valor(Carta carta)

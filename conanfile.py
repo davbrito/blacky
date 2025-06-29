@@ -72,3 +72,4 @@ class PackageRecipe(ConanFile):
             "without_wave": True,
         }
         self.requires("boost/1.88.0", options=boost_ops)
+        self.requires("ms-gsl/4.2.0")
